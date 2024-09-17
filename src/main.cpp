@@ -6,7 +6,7 @@
 /*   By: augougea <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/17 17:12:22 by augougea          #+#    #+#             */
-/*   Updated: 2024/08/17 17:13:30 by augougea         ###   ########.fr       */
+/*   Updated: 2024/08/21 16:25:26 by tdelage          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,30 +18,19 @@ void signalHandler(int signum)
 }
 
 int main() {
-
-    Server myServer(8080, 3);
-    std::vector<struct pollfd>& fds = myServer.getFds();
-
-    struct sigaction sa;
-    sa.sa_handler = signalHandler;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = 0;
-    sigaction(SIGINT, &sa, NULL);
-
-    try
-    {
-        myServer.initializeServer();
-        myServer.initializePoll();
-        while (true) 
-        {
-            pollDeclaration(fds);
-            newConnection(fds, myServer);
-            messageClients(fds, myServer);
+        Server myServer(8080, 3);
+        signal(SIGINT, signalHandler);
+        try {
+                myServer.initializeServer();
+                myServer.initializePoll();
+                while(true) {
+                        pollDeclaration(myServer.getFds());
+                        newConnection(myServer.getFds(), myServer);
+                        messageClients(myServer.getFds(), myServer);
+                }
+        } catch(std::exception &e) {
+                std::cerr << e.what() << std::endl;
         }
-    }
-    catch(std::exception &e) { std::cerr << e.what() << std::endl; }
-
-    myServer.closeFdandSocket();
-
-    return 0;
+        myServer.closeFdandSocket();
+        return 0;
 }
