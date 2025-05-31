@@ -3,13 +3,14 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-Client::Client(Server serv) : _sock(serv.accept()) {}
+Client::Client(Server &serv) : _sock(serv.accept()), _auth(false), _buf(""), _nick("Unknown") {}
 
 Client::~Client() {
         close(_sock);
 }
 
 void Client::send(std::string data) {
+        data += "\r\n";
         ::send(_sock, data.c_str(), data.size(), 0);
 }
 
@@ -33,9 +34,8 @@ std::string Client::recv() {
                 CRLF = false;
         }
         if (pos != std::string::npos) {
-                data = _buf.substr(0, pos);
-                if (CRLF) _buf.erase(0, pos + 2);
-                else _buf.erase(0, pos + 1);
+                data = _buf.substr(0, pos + (CRLF ? 2 : 1));
+                _buf.erase(0, pos + (CRLF ? 2 : 1));
         }
         return data;
 }
@@ -46,4 +46,20 @@ std::string Client::getBuffer() const {
 
 int Client::getSocket() const {
         return _sock;
+}
+
+bool Client::getAuth() const {
+        return _auth;
+}
+
+void Client::setAuth(bool auth) {
+        _auth = auth;
+}
+
+const std::string &Client::nick() const {
+        return _nick;
+}
+
+void Client::setNick(const std::string &nick) {
+        _nick = nick;
 }

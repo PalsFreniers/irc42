@@ -1,6 +1,7 @@
 #include "Logger.hpp"
 #include "colors.hpp"
 #include <cstdarg>
+#include <fstream>
 #include <iostream>
 #include <stdexcept>
 #include <bitset>
@@ -16,32 +17,36 @@ const char *getLogStr(LogLevel l) {
         }
 }
 
-Logger::Logger() : _name("") {}
+Logger::Logger() : _name(""), _logFile(std::cerr) {}
 
-Logger::Logger(const std::string &name) : _name(name) {}
+Logger::Logger(const std::string &name) : _name(name), _logFile(std::cerr) {}
 
-Logger::Logger(const Logger &src) : _name(src._name) {}
+Logger::Logger(const Logger &src) : _name(src._name), _logFile(std::cerr) {}
 
 Logger &Logger::operator=(const Logger &rhs) {
 	this->_name = rhs._name;
 	return *this;
 }
 
-Logger::~Logger() {}
+Logger::~Logger() {
+        if (_file.is_open()) {
+                _file.close();
+        }
+}
 
-void logFormat(const std::string str, size_t &i, std::va_list lst) {
+void Logger::logFormat(const std::string str, size_t &i, std::va_list lst) {
         i++;
         switch(str[i]) {
-                case '/': std::cerr << '/'; break;
-                case 's': std::cerr << va_arg(lst, const char *); break;
-                case 'c': std::cerr << (char)va_arg(lst, int); break;
-                case 'd': std::cerr << va_arg(lst, int); break;
-                case 'l': std::cerr << va_arg(lst, long); break;
-                case 'x': std::cerr << "0x" << std::hex << va_arg(lst, int) << std::dec; break;
-                case 'X': std::cerr << "0x" << std::hex << va_arg(lst, long) << std::dec; break;
-                case 'o': std::cerr << "0" << std::oct << va_arg(lst, int) << std::dec; break;
-                case 'b': std::cerr << "0b" << std::bitset<sizeof(int) * 8>(va_arg(lst, int)) << std::dec; break;
-                default: std::cerr << "/" << str[i]; break;
+                case '/': _logFile << '/'; break;
+                case 's': _logFile << va_arg(lst, const char *); break;
+                case 'c': _logFile << (char)va_arg(lst, int); break;
+                case 'd': _logFile << va_arg(lst, int); break;
+                case 'l': _logFile << va_arg(lst, long); break;
+                case 'x': _logFile << "0x" << std::hex << va_arg(lst, int) << std::dec; break;
+                case 'X': _logFile << "0x" << std::hex << va_arg(lst, long) << std::dec; break;
+                case 'o': _logFile << "0" << std::oct << va_arg(lst, int) << std::dec; break;
+                case 'b': _logFile << "0b" << std::bitset<sizeof(int) * 8>(va_arg(lst, int)) << std::dec; break;
+                default: _logFile << "/" << str[i]; break;
         }
 }
 
@@ -50,13 +55,20 @@ void Logger::log(LogLevel lvl, const std::string fmt, ...) {
         if(lvl == LOG_DEBUG) return;
 #endif // RELEASE
         std::va_list lst;
-        std::cerr << getLogStr(lvl) << (_name.empty() ? "" : " ") << _name << " => ";
+        _logFile << getLogStr(lvl) << (_name.empty() ? "" : " ") << _name << " => ";
         va_start(lst, fmt);
         for(size_t i = 0; i < fmt.length(); i++) {
                 if(fmt[i] == '/' && i != fmt.length() - 1) logFormat(fmt, i, lst);
-                else std::cerr << fmt[i];
+                else _logFile << fmt[i];
         }
         va_end(lst);
-        std::cerr << std::endl;
-        if(lvl == LOG_FATAL) throw std::logic_error(RGB(127, 0, 0) "!![PANIC]!! fatal logger has been reached\n");
+        _logFile << std::endl;
+}
+
+void Logger::setLogFile(const std::string &filename) {
+        if (_file.is_open()) _file.close();
+        _file.open(filename, std::ios::app);
+        if (!_file.is_open()) throw std::runtime_error("Failed to open log file: " + filename);
+        _logFile.rdbuf(_file.rdbuf());
+        _logFile << "-------------------------------#-#-# Log file opened: " << filename << "#-#-#-------------------------------" << std::endl;
 }
