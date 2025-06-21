@@ -1,9 +1,9 @@
 #include "Client.hpp"
-#include "Server.hpp"
+#include "AServer.hpp"
 #include <unistd.h>
 #include <sys/socket.h>
 
-Client::Client(Server &serv) : _sock(serv.accept()), _auth(false), _buf(""), _nick("Unknown") {}
+Client::Client(AServer &serv) : _sock(serv.accept()), _auth(false), _buf("") {}
 
 Client::~Client() {
         close(_sock);
@@ -40,11 +40,7 @@ std::string Client::recv() {
         return data;
 }
 
-std::string Client::getBuffer() const {
-        return _buf;
-}
-
-int Client::getSocket() const {
+int Client::_getSocket() const {
         return _sock;
 }
 
@@ -52,14 +48,10 @@ bool Client::getAuth() const {
         return _auth;
 }
 
-void Client::setAuth(bool auth) {
-        _auth = auth;
+void Client::setAuth() {
+        _auth = true;
 }
 
-const std::string &Client::nick() const {
-        return _nick;
-}
-
-void Client::setNick(const std::string &nick) {
-        _nick = nick;
+void Client::unsetAuth() {
+        _auth = false;
 }

@@ -2,23 +2,20 @@
 
 #include <string>
 
-class Server;
+class AServer;
 
 class Client {
 public:
-        Client(Server &serv);
-        ~Client();
+        Client(AServer &serv);
+        virtual ~Client();
         void send(std::string data);
         std::string recv();
-        std::string getBuffer() const;
-        int getSocket() const;
         bool getAuth() const;
-        void setAuth(bool auth);
-        const std::string &nick() const;
-        void setNick(const std::string &nick);
+        void setAuth();
+        void unsetAuth();
+        int _getSocket() const;
 private:
         bool _auth;
         int _sock;
         std::string _buf;
-        std::string _nick;
 };

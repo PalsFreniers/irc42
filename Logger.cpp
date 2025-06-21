@@ -6,6 +6,8 @@
 #include <stdexcept>
 #include <bitset>
 
+Logger _log("");
+
 const char *getLogStr(LogLevel l) {
         switch(l) {
                 case LOG_DEBUG: return BLU "[DEBUG]" CLR;

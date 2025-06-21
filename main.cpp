@@ -2,7 +2,7 @@
 #include "Logger.hpp"
 #include <csignal>
 
-Logger _log("Server");
+
 bool _exitServ = false;
 
 //set signal handler for graceful shutdown on sig int and sig term
